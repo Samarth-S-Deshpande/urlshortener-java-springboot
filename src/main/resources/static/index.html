@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Samarth's URL Shortener</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #172033;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 22px 8%;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        header span {
+            color: #2563eb;
+        }
+
+        main {
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+            padding: 45px 20px;
+            flex: 1;
+        }
+
+        .card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 35px #0f172a0d;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            margin: 0 0 12px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        input:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 14px 20px;
+            background: #2563eb;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #shortenBtn {
+            width: 100%;
+        }
+
+        .result {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+        }
+
+        .result h2 {
+            font-size: 20px;
+            margin-top: 0;
+        }
+
+        #shortUrl {
+            overflow-wrap: anywhere;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .original {
+            color: #64748b;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+            margin-top: 15px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        #message {
+            color: #b91c1c;
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 24px 15px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        footer strong {
+            color: #2563eb;
+        }
+
+        footer small {
+            font-size: 12px;
+        }
+
+        @media (max-width: 500px) {
+            .card {
+                padding: 24px 18px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    🔗 <span>Samarth</span> URL Shortener
+</header>
+
+<main>
+    <section class="card">
+        <h1>Make your links shorter.</h1>
+
+        <p class="subtitle">
+            Paste your long URL below and get a short link
+            you can easily share.
+        </p>
+
+        <form id="urlForm">
+            <label for="originalUrl">Your original URL</label>
+
+            <input
+                    type="url"
+                    id="originalUrl"
+                    placeholder="https://www.example.com/your-long-link"
+                    required
+            >
+
+            <button type="submit" id="shortenBtn">
+                Shorten URL
+            </button>
+        </form>
+
+        <p id="message" role="status" aria-live="polite"></p>
+
+        <section class="result" id="result">
+            <h2>🎉 Your short link is ready!</h2>
+
+            <a id="shortUrl" href="#" target="_blank"
+               rel="noopener noreferrer"></a>
+
+            <p class="original">
+                Original URL: <span id="originalResult"></span>
+            </p>
+
+            <div class="actions">
+                <button type="button" id="copyBtn">
+                    Copy link
+                </button>
+
+                <button type="button" id="openBtn">
+                    Open link
+                </button>
+            </div>
+        </section>
+    </section>
+</main>
+
+<footer>
+    Built with ❤️ by <strong>Samarth Deshpande</strong>
+    <br>
+    <small>Java 17 • Spring Boot • MySQL • Redis • Docker</small>
+</footer>
+
+<script>
+    const form = document.getElementById("urlForm");
+    const input = document.getElementById("originalUrl");
+    const button = document.getElementById("shortenBtn");
+    const message = document.getElementById("message");
+    const result = document.getElementById("result");
+
+    let generatedUrl = "";
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        message.textContent = "";
+        result.style.display = "none";
+        button.disabled = true;
+        button.textContent = "Creating your link...";
+
+        try {
+            const response = await fetch("/api/urls", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    originalUrl: input.value.trim()
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    "Unable to shorten URL. Please check your URL and try again."
+                );
+            }
+
+            const data = await response.json();
+
+            // Build the link from the current site address.
+            // This works locally and after deployment.
+            generatedUrl =
+                window.location.origin + "/" +
+                encodeURIComponent(data.shortCode);
+
+            const shortUrlElement =
+                document.getElementById("shortUrl");
+
+            shortUrlElement.href = generatedUrl;
+            shortUrlElement.textContent = generatedUrl;
+
+            document.getElementById("originalResult").textContent =
+                data.originalUrl;
+
+            result.style.display = "block";
+
+        } catch (error) {
+            message.textContent =
+                error.message || "Something went wrong.";
+        } finally {
+            button.disabled = false;
+            button.textContent = "Shorten URL";
+        }
+    });
+
+    document.getElementById("copyBtn").addEventListener(
+        "click", async function () {
+            try {
+                await navigator.clipboard.writeText(generatedUrl);
+                message.style.color = "#15803d";
+                message.textContent = "Short link copied successfully!";
+            } catch {
+                message.style.color = "#b91c1c";
+                message.textContent =
+                    "Copy failed. Please copy the link above manually.";
+            }
+        }
+    );
+
+    document.getElementById("openBtn").addEventListener(
+        "click", function () {
+            window.open(
+                generatedUrl,
+                "_blank",
+                "noopener,noreferrer"
+            );
+        }
+    );
+</script>
+
+</body>
+</html>
