@@ -2,6 +2,11 @@
 
 A TinyURL-inspired URL Shortener built using Java, Spring Boot, MySQL, Redis-compatible caching, and a simple web frontend. The application converts long URLs into short links and redirects users to the original URLs.
 
+## Live Demo
+
+**Try the application:** https://urlshortener-java-springboot.onrender.com/
+
+Check out the live URL Shortener application deployed on Render.
 ## Features
 
 - **URL Shortening:** Generate unique short codes for long URLs.
